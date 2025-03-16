@@ -4,7 +4,10 @@ import pandas as pd
 import time
 from googlesearch import search
 from urllib.parse import urlparse
+from PIL import Image
+from io import BytesIO
 import random
+import retrying
 
 
 def get_company_website(company_name):
@@ -25,8 +28,9 @@ def extract_domain(url):
         return None
 
 
+@retrying.retry(stop_max_attempt_number=3, wait_fixed=2000)
 def download_logo(company_url, company_name, save_path="logos"):
-    """Downloads the company logo from Brandfetch."""
+    """Downloads the company logo from Brandfetch with retries."""
     api_key = "1ido2FzbOBCMRcIuMAs"
     logo_url = f"https://cdn.brandfetch.io/{company_url}/w/512/h/94/logo?c={api_key}"
 
@@ -54,15 +58,23 @@ def download_logo(company_url, company_name, save_path="logos"):
         "Content-Type", ""
     ):
         os.makedirs(save_path, exist_ok=True)
-        file_path = os.path.join(save_path, f"{company_name}.png")
+        content_type = response.headers["Content-Type"]
+        extension = content_type.split("/")[-1]  # Extract the file extension
 
+        if extension == "webp":
+            extension = "png"  # Convert WEBP to PNG for better compatibility
+
+        file_path = os.path.join(save_path, f"{company_name}.{extension}")
+
+        # Save the image as raw bytes first
         with open(file_path, "wb") as f:
             for chunk in response.iter_content(1024):
                 f.write(chunk)
 
         print(f"Logo saved for {company_name}: {file_path}")
     else:
-        print(f"Failed to download logo for {company_name}.")
+        print(f"Invalid content type or failed request for {company_name}. Retrying...")
+        raise Exception("Failed request")
 
 
 def main(csv_path):
@@ -72,7 +84,15 @@ def main(csv_path):
         print("CSV must contain a 'Company' column.")
         return
 
+    os.makedirs("logos", exist_ok=True)  # Ensure the logos directory exists
+
     for company in df["Company"].dropna():
+        existing_files = os.listdir("logos")
+
+        if any(company in file for file in existing_files):
+            print(f"Skipping {company}, logo already exists.")
+            continue
+
         print(f"Processing: {company}")
         website = get_company_website(company)
         if website:
