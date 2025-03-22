@@ -4,15 +4,17 @@ from PIL import Image
 import os
 
 # Configuration
-LOGO_FOLDER = (
-    "C:/Users/dhruv\Documents/logo_array/src/logos"  # Folder where logos are stored
-)
+LOGO_FOLDER = "C:/Users/ASUS/Documents/logo_array/src/logos"  # C:/Users/dhruv\Documents/logo_array/src/logos"  # Folder where logos are stored
 OUTPUT_FILE = "logos_presentation.pptx"
-LOGO_HEIGHT = 15  # Standardized height in pixels
-LOGO_POSITIONS = (8, 20)  # (columns, rows) grid structure
-SLIDE_WIDTH, SLIDE_HEIGHT = Inches(5), Inches(8)  # Standard slide size
+# LOGO_HEIGHT = 15  # Standardized height in pixels
+LOGO_POSITIONS = (5, 6)  # (columns, rows) grid structure
+SLIDE_WIDTH, SLIDE_HEIGHT = Inches(3), Inches(5)  # Standard slide size
 HORIZONTAL_PADDING = Inches(2)  # Extra spacing between columns
 WHITE_THRESHOLD = 230  # Adjust threshold for detecting white backgrounds (0-255)
+MAX_WIDTH = 120
+
+num_rows = LOGO_POSITIONS[1]
+LOGO_HEIGHT = int(5 * 96 / num_rows / 3)
 
 # Load and process logos
 logos = [f for f in os.listdir(LOGO_FOLDER) if f.endswith((".png", ".jpg", ".jpeg"))]
@@ -62,12 +64,16 @@ for logo in logos:
     # Step 3: Resize while maintaining aspect ratio
     aspect_ratio = img.width / img.height
     new_width = int(LOGO_HEIGHT * aspect_ratio)
-    img = img.resize((new_width, LOGO_HEIGHT))
+    new_height = LOGO_HEIGHT
+    if new_width > MAX_WIDTH:
+        new_width = MAX_WIDTH
+        new_height = int(new_width / aspect_ratio)
+    img = img.resize((new_width, new_height))
 
     # Overwrite the original image
     img.save(logo_path, format="PNG")  # Ensure PNG format for transparency
 
-    processed_logos.append((logo_path, new_width, LOGO_HEIGHT))
+    processed_logos.append((logo_path, new_width, new_height))
 
 # **Step 4: Compute the widest image per column**
 column_widths = [0] * LOGO_POSITIONS[0]  # Track max width in each column

@@ -28,7 +28,7 @@ def extract_domain(url):
         return None
 
 
-@retrying.retry(stop_max_attempt_number=3, wait_fixed=2000)
+@retrying.retry(stop_max_attempt_number=5, wait_fixed=2000)
 def download_logo(company_url, company_name, save_path="logos"):
     """Downloads the company logo from Brandfetch with retries."""
     api_key = "1ido2FzbOBCMRcIuMAs"

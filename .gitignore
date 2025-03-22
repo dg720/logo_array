@@ -95,3 +95,4 @@ target/
 # exclude data from source control by default
 /data/
 /src/logos
+/src/logo_master
