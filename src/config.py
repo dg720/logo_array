@@ -7,14 +7,21 @@ import os
 LOGO_FOLDER = "C:/Users/ASUS/Documents/logo_array/src/logos"  # C:/Users/dhruv\Documents/logo_array/src/logos"  # Folder where logos are stored
 OUTPUT_FILE = "logos_presentation.pptx"
 # LOGO_HEIGHT = 15  # Standardized height in pixels
-LOGO_POSITIONS = (5, 6)  # (columns, rows) grid structure
-SLIDE_WIDTH, SLIDE_HEIGHT = Inches(3), Inches(5)  # Standard slide size
+LOGO_POSITIONS = (3, 10)  # (columns, rows) grid structure # ONLY INPUT
+USER_WIDTH, USER_HEIGHT = (4, 9)  # user input dim in inches # ONLY INPUT
+SLIDE_WIDTH, SLIDE_HEIGHT = (
+    Inches(USER_WIDTH),
+    Inches(USER_HEIGHT),
+)  # Standard slide size
 HORIZONTAL_PADDING = Inches(2)  # Extra spacing between columns
 WHITE_THRESHOLD = 230  # Adjust threshold for detecting white backgrounds (0-255)
-MAX_WIDTH = 120
+# MAX_WIDTH = 120
 
-num_rows = LOGO_POSITIONS[1]
-LOGO_HEIGHT = int(5 * 96 / num_rows / 3)
+num_cols, num_rows = LOGO_POSITIONS[0], LOGO_POSITIONS[1]
+LOGO_HEIGHT = int(USER_HEIGHT * 96 / num_rows / 2)
+slide_pixel_width = USER_WIDTH * 96
+MAX_WIDTH = int(slide_pixel_width / num_cols)
+# HORIZONTAL_PADDING = Inches(slide_pixel_width / num_cols * 1 / 3 / 96)
 
 # Load and process logos
 logos = [f for f in os.listdir(LOGO_FOLDER) if f.endswith((".png", ".jpg", ".jpeg"))]
@@ -75,26 +82,27 @@ for logo in logos:
 
     processed_logos.append((logo_path, new_width, new_height))
 
-# **Step 4: Compute the widest image per column**
-column_widths = [0] * LOGO_POSITIONS[0]  # Track max width in each column
-for idx, (_, width, _) in enumerate(processed_logos):
-    col = idx % LOGO_POSITIONS[0]  # Determine column index
-    column_widths[col] = max(column_widths[col], width)
+## **Step 4: Compute the widest image per column**
+# column_widths = [0] * LOGO_POSITIONS[0]  # Track max width in each column
+# for idx, (_, width, _) in enumerate(processed_logos):
+#    col = idx % LOGO_POSITIONS[0]  # Determine column index
+#    column_widths[col] = max(column_widths[col], width)
 
 # **Step 5: Compute column centers**
+col_spacing = SLIDE_WIDTH / (LOGO_POSITIONS[0] - 1)
 column_centers = []
-current_x = Inches(0.5)  # Start slightly from the left margin
-for col_width in column_widths:
-    column_center = current_x + (col_width / 96) / 2  # Center within column
+current_x = Inches(0.1)  # Start slightly from the left margin
+for i in range(num_cols):
+    column_center = current_x + col_spacing / 2  # Center within column
     column_centers.append(column_center)
-    current_x += (col_width / 96) + HORIZONTAL_PADDING  # Move to next column start
+    current_x += col_spacing  # Move to next column start
 
 # **Step 6: Create PowerPoint presentation**
 prs = Presentation()
 slide = prs.slides.add_slide(prs.slide_layouts[5])  # Blank slide
 
 # **Step 7: Calculate vertical spacing**
-row_spacing = SLIDE_HEIGHT / (LOGO_POSITIONS[1] + 1)
+row_spacing = SLIDE_HEIGHT / (LOGO_POSITIONS[1] - 1)  # count number of spaces not rows
 
 # **Step 8: Place logos in a grid with center alignment**
 for idx, (logo, width, height) in enumerate(processed_logos):
